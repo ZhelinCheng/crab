@@ -1,0 +1,15 @@
+{
+  "watch": [
+    "server/**/*.js",
+    "tasks/**/*.js",
+    "plugins/**/*.js"
+  ],
+  "ignore": [
+    ".git",
+    "node_modules"
+  ],
+  "exec": "node server/core/bin/www.js",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}
