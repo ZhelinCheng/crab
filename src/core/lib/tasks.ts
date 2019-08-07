@@ -2,77 +2,77 @@
  * Created by ChengZheLin on 2019/8/7.
  * Features: 生命周期
  */
+
+export interface TaskItem {
+    task: (ctx: any) => void
+}
+
+export interface TaskArrayItem {
+    tid: string,
+    file: string,
+    cron: string,
+    type: number,
+    code?: string,
+    open: 0 | 1
+}
+
 import { CronJob } from 'cron'
 import glob from 'glob'
 import path from 'path'
 import md5 from 'md5'
 import rq from './request'
 import fsext from 'fs-extra'
-import fs from 'fs'
+import curd from './curd'
+import knex from 'knex'
+import { db, _TASKS_TABLE, _TYPES_TABLE } from './database'
 
-// const config = require('../../../crab.config')
-const low = require('lowdb')
-const FileSync = require('lowdb/adapters/FileSync')
-
-// 获取及初始化数据库
-const adapter = new FileSync(resolve('../../../db.json'))
-const db = low(adapter)
-db.defaults({ tasks: {} , user: {} })
-    .write()
-
-function resolve (p: string): string {
-    return path.resolve(__dirname, p)
+function resolve(p: string): string {
+    return path.resolve(__dirname, '../../../' + p)
 }
 
-interface TaskItem {
-    task: (ctx: any) => void
-}
-
-class Tasks {
-    lowdb: any
-    pdb: any
+export class Tasks {
+    db: undefined | knex = db
     list: {
         [key: string]: any
     } = {}
-    constructor () {
-        try {
-            this.lowdb = db
-            this.pluginsLoad()
-            this.tasksLoad()
-        } catch (e) {
-            console.error(e)
-        }
+
+    constructor() {
+        this.tasksDbLoad()
+            .then(data => {
+                console.log(data)
+                this.tasksLoad(data)
+            })
+            .catch((e: Error) => {
+                console.error(e)
+            })
     }
 
-    /**
-     * 插件加载
-     */
-    pluginsLoad () {
-        const dbPath = resolve('../../../plugins/database.js')
-        const isDb = fs.existsSync(dbPath)
-        if (isDb) {
-            this.pdb = require(dbPath)
-        }
+    // 读取数据库中的任务
+    async tasksDbLoad(): Promise<TaskArrayItem[]> {
+        return await db.select().from(_TASKS_TABLE)
     }
 
     /**
      * 任务加载
      */
-    tasksLoad () {
-        const tasks = glob.sync(resolve('../../../tasks/**/*.js'))
+    tasksLoad(data: TaskArrayItem[]) {
+        const tasks = glob.sync(resolve('tasks/**/*.js'))
+        let tasksList = []
         tasks.forEach((item: string) => {
             const tid: string = md5(item).substring(0, 8)
             const taskItem: TaskItem = require(item)
             const dbName = `tasks.${tid}`
 
-            let taskNewConf = {
+            let taskNewConf: TaskArrayItem = {
                 tid,
-                open: false,
+                open: 0,
                 file: item,
                 cron: '',
-                type: 'all',
+                type: 1
             }
-            if (!db.has(dbName).value()) {
+
+            tasksList.push(taskNewConf)
+            /* if (!db.has(dbName).value()) {
                 db.set(dbName, taskNewConf).write()
             } else {
                 taskNewConf = db.get(dbName).value()
@@ -95,7 +95,7 @@ class Tasks {
                         })
                     }, null, open && cron.length > 0, 'Asia/Shanghai');
                 }())
-            }
+            } */
         })
     }
 
@@ -103,7 +103,7 @@ class Tasks {
      * 停止任务
      * @param tid
      */
-    stop (tid?: string): void {
+    /*stop (tid?: string): void {
         if (tid) {
             const taskItem = this.list[tid]
             taskItem && taskItem.cron && taskItem.task && taskItem.task.stop()
@@ -117,10 +117,10 @@ class Tasks {
         }
     }
 
-    /**
+    /!**
      * 启动任务
      * @param tid
-     */
+     *!/
     start (tid?: string): void {
         if (tid) {
             const taskItem = this.list[tid]
@@ -135,12 +135,12 @@ class Tasks {
         }
     }
 
-    /**
+    /!**
      * 数据保存
      * @param table
      * @param data
      * @param ops
-     */
+     *!/
     async save (table: string, data: any, ops?: any): Promise<boolean> {
         if (this.pdb) {
             return await this.pdb.save(table, data, ops)
@@ -150,12 +150,12 @@ class Tasks {
         }
     }
 
-    /**
+    /!**
      * 数据更新方法
      * @param table
      * @param data
      * @param ops
-     */
+     *!/
     async update (table: string, data: any, ops?: any): Promise<boolean> {
         if (this.pdb) {
             return await this.pdb.update(table, data, ops)
@@ -163,8 +163,5 @@ class Tasks {
             console.info('你未定义数据更新方法')
             return false
         }
-    }
+    }*/
 }
-
-
-export default Tasks

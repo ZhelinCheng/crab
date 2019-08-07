@@ -77,3 +77,4 @@ dist
 server
 config.*.json
 db.json
+*.db

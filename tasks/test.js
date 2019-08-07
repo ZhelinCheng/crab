@@ -14,5 +14,6 @@ module.exports = {
     })
 
     console.log(await ctx.save('测试', []))
+    ctx.stop()
   }
 }

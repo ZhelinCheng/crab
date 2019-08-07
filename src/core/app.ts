@@ -4,7 +4,7 @@ import json from 'koa-json'
 import bodyparser from 'koa-bodyparser'
 import logger from 'koa-logger'
 
-import Tasks from './lib/tasks'
+import { Tasks } from './lib/tasks'
 
 const onerror = require('koa-onerror')
 

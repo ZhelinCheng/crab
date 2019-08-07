@@ -6,7 +6,7 @@
 'use strict'
 
 module.exports = {
-  plugins: [
-    'plugins/database.js'
-  ]
+  database: {
+    filename: 'crab.db'
+  }
 }
