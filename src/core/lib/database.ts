@@ -19,6 +19,7 @@ const _TYPES_TABLE = 'c_types'
 
 
 let db: knex | undefined = undefined
+
 if (!db) {
     const dbFile = resolve(database.filename || 'crab.db')
     fsext.ensureFileSync(dbFile)
@@ -34,10 +35,12 @@ if (!db) {
     db.schema.hasTable(_TASKS_TABLE).then(function (exists) {
         if (!exists) {
             return db.schema.createTable(_TASKS_TABLE, function (t: TableBuilder) {
-                t.string('tid', 8).primary().notNullable()
-                t.string('file', 200).notNullable()
+                t.increments('tid').primary()
+                t.string('title', 30).defaultTo('新建任务')
+                t.string('table', 30)
                 t.string('cron', 30)
                 t.integer('type', 3).defaultTo(1)
+                t.integer('error_time', 4)
                 t.text('code')
                 t.boolean('open').defaultTo(0)
             })

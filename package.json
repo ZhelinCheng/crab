@@ -35,7 +35,8 @@
     "md5": "^2.2.1",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
-    "sqlite3": "^4.0.9"
+    "sqlite3": "^4.0.9",
+    "vm2": "^3.8.3"
   },
   "devDependencies": {
     "@types/cron": "^1.7.1",

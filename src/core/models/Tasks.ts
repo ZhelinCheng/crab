@@ -9,9 +9,20 @@ import { TaskArrayItem } from '../lib/tasks'
 export default class Tasks {
     constructor () {}
 
-    async select (tid?: string): Promise<TaskArrayItem[]> {
+    static async select (ops?: object): Promise<TaskArrayItem[]> {
         return await db.select()
-            .where('td', '=', tid)
+            .where(function () {
+                ops && this.where(ops)
+            })
+            .from(_TASKS_TABLE)
+    }
+
+    static async selectTasks (): Promise<TaskArrayItem[]> {
+        return await db.select()
+            .where('open', '=', 1)
+            .whereNotNull('table')
+            .whereNotNull('code')
+            .whereNotNull('cron')
             .from(_TASKS_TABLE)
     }
 }
