@@ -31,7 +31,7 @@ import TasksModel from '../models/Tasks'
 import { db } from './database'
 
 function resolve(p: string): string {
-    return path.resolve(__dirname, '../../../' + p)
+    return path.resolve(__dirname, '../../' + p)
 }
 // 获取数据库配置
 const {database} = require(resolve('crab.config.js'))

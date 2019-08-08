@@ -7,22 +7,21 @@
     "moduleResolution": "node",
     "declaration": true,
     "sourceMap": true,
-    "outDir": "./server/core",
+    "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
       "*": [
         "node_modules/*",
-        "src/core/types/*"
+        "src/types/*"
       ]
     }
   },
   "exclude": [
     "node_modules",
     "**/*.spec.ts",
-    "src/server",
-    "tasks"
+    "src/dist"
   ],
   "include": [
-    "src/core/**/*"
+    "src/**/*"
   ]
 }

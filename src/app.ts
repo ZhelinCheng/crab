@@ -3,8 +3,8 @@ import { Context } from 'koa'
 import json from 'koa-json'
 import bodyparser from 'koa-bodyparser'
 import logger from 'koa-logger'
-
 import { Tasks } from './lib/tasks'
+import router from './routes'
 
 const onerror = require('koa-onerror')
 
@@ -38,7 +38,7 @@ app.use(async (ctx, next) => {
 })
 
 // routes
-// app.use(index.routes(), index.allowedMethods())
+app.use(router.routes())
 // app.use(users.routes(), users.allowedMethods())
 
 // error-handling

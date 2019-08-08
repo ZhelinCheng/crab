@@ -1,14 +1,13 @@
 {
   "watch": [
-    "server/**/*.js",
-    "tasks/**/*.js",
-    "plugins/**/*.js"
+    "dist/**/*.js",
+    "crab.config.js"
   ],
   "ignore": [
     ".git",
     "node_modules"
   ],
-  "exec": "node server/core/bin/www.js",
+  "exec": "node dist/bin/www.js",
   "env": {
     "NODE_ENV": "development"
   }

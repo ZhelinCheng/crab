@@ -6,6 +6,7 @@
 'use strict'
 
 module.exports = {
+  secret: 'fGK7cbcmRyutieTSMUje0wqwYE4sF3dL',
   database: {
     filename: 'crab.db',
     save: function () {

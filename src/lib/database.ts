@@ -7,7 +7,7 @@ import fsext from 'fs-extra'
 import path from 'path'
 
 function resolve(p: string): string {
-    return path.resolve(__dirname, '../../../' + p)
+    return path.resolve(__dirname, '../../' + p)
 }
 
 const {database} = require(resolve('crab.config.js'))
