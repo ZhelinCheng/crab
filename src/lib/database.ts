@@ -52,6 +52,7 @@ if (!db) {
         if (!exists) {
             return db.schema.createTable(_TASKS_TABLE, function (t: TableBuilder) {
                 t.increments('tid').primary()
+                t.integer('created_at').notNullable().index('created_at')
                 t.string('title', 30).defaultTo('新建任务')
                 t.string('table', 30)
                 t.string('cron', 30)
