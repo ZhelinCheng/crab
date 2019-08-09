@@ -20,15 +20,12 @@ export interface TaskArrayItem {
 }
 
 import _ from 'lodash'
+import cheerio from 'cheerio'
 import { CronJob } from 'cron'
 import path from 'path'
-import md5 from 'md5'
 import rq from './request'
-import fsext from 'fs-extra'
-import knex from 'knex'
 // import { VM } from 'vm2'
 import TasksModel from '../models/Tasks'
-import { db } from './database'
 
 function resolve(p: string): string {
     return path.resolve(__dirname, '../../' + p)
@@ -48,7 +45,6 @@ const test = `{
 }`
 
 export class Tasks {
-    db: undefined | knex = db
     rq = rq
     tasks: {
         [key: string]: any
@@ -69,7 +65,13 @@ export class Tasks {
      * @param def
      */
     async carried(def: any): Promise<void> {
-        let data = def.request && await def.request({rq})
+        let ctx: any = {
+            rq,
+            _,
+            $: cheerio
+        }
+
+        let data = def.request && await def.request(ctx)
         const isUpdate = def.hasOwnProperty('update')
         const isSave = def.hasOwnProperty('save')
         const inSave = 'save' in def
@@ -80,14 +82,16 @@ export class Tasks {
             return
         }
 
+        ctx.data = data
+
         if (isSave) {
-            def.save(data)
+            def.save(ctx)
         } else if (isUpdate) {
-            def.update(data)
+            def.update(ctx)
         } else if (inSave) {
-            def.save(data)
+            def.save(ctx)
         } else if (inUpdate) {
-            def.update(data)
+            def.update(ctx)
         } else {
             console.info('你未定义任何方法')
         }
@@ -118,12 +122,6 @@ export class Tasks {
         const tid = task.tid
         let def = new Function(`return ${task.code}`)() || {}
         def = Object.assign(Object.create(database || {}), def, task, {
-            rq,
-            tools: {
-                md5,
-                fs: fsext,
-                _,
-            },
             stop: this.timerHandle.bind(this, tid, false),
             start: this.timerHandle.bind(this, tid, true),
         })

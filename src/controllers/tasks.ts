@@ -6,7 +6,7 @@ import { Context } from 'koa'
 
 export async function getTasksList (ctx: Context, next: Function): Promise<void> {
     try {
-        ctx.body = '1111'
+        ctx.render(200, 111)
     } catch (e) {
         next(e)
     }

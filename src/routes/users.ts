@@ -5,20 +5,18 @@
 
 import Router from 'koa-router'
 import AllowedMethods from '../middleware/allowedMethods'
-import * as tasks from '../controllers/tasks'
+import * as users from '../controllers/users'
 const router: Router = new Router()
 
-router.use(['/reset', '/sign'], AllowedMethods.allowed)
+router.use(['/reset'], AllowedMethods.allowed)
 
 // 登录
 router.post('/login', AllowedMethods.login)
 
 // 重置
-router.post('/reset', ctx => {
-    ctx.body = 1111
-})
+router.post('/reset', users.reset)
 
 // 注册
-router.post('/sign')
+router.post('/sign', users.registered)
 
 export default router

@@ -5,59 +5,78 @@
 
 import jwt from 'jwt-simple'
 import { Context } from 'koa'
+import bcrypt from 'bcryptjs'
+import Users, { UserItem } from '../models/Users'
 const { secret } = require('../../crab.config')
 
 export default class AllowedMethods {
     static async login (ctx: Context) {
-        const body = ctx.request.body;
-        const name = body.name;
-        const password = body.password;
-        const expires = Date.now() + 1000 * 60;
+        const body = ctx.request.body
+        const name = body.name
+        const password = body.password
+        const expires = Date.now() + 1000 * 10080
 
-        const payload = {
-            iss: 'crab',
-            exp: expires,
-            admin: true,
-            jti: Math.random(),
-            name
-        };
-        const Token = jwt.encode(payload, secret);
-        ctx.body = {
-            code: 200,
-            msg: '登陆成功',
-            data: Token,
+        if (/^\w{5,16}$/.test(name) && password.length <= 16) {
+            let userArray = await Users.select({
+                name
+            })
+
+            const user: UserItem = userArray[0]
+            if (user && bcrypt.compareSync(password, user.hash)) {
+                const payload = {
+                    iss: 'crab',
+                    exp: expires,
+                    admin: user.admin,
+                    execute: user.execute,
+                    uid: user.uid,
+                    name
+                };
+                const Token = jwt.encode(payload, secret);
+                ctx.render(200, Token)
+            } else {
+                ctx.render(403004)
+            }
+            return
         }
+
+        ctx.render(403002)
     }
 
 
     static async allowed (ctx: Context, next: Function) {
         let token: string = ctx.get('authorization')
-        ctx.status = 401
-
         if (/^bearer/i.test(token)) {
             try {
                 token = token.replace(/^bearer\s+/i, '')
                 const payload = jwt.decode(token, secret)
                 if (Date.now() >  payload.exp) {
-                    ctx.body = {
-                        code: 401,
-                        msg: 'Token已过期，请重新登录'
-                    }
+                    ctx.render(401, null, 'Token已过期')
                 } else {
-                    ctx.status = 200
+                    ctx.state.user = payload
                     next()
                 }
             } catch (e) {
-                ctx.body = {
-                    code: 401,
-                    msg: 'Token无效'
-                }
-            }
-        } else {
-            ctx.body = {
-                code: 401,
-                msg: '未登录'
+                ctx.render(401, null, '无效Token')
             }
         }
+    }
+
+    static payload (ctx: Context): any {
+        let token: string = ctx.get('authorization')
+        if (/^bearer/i.test(token)) {
+            try {
+                token = token.replace(/^bearer\s+/i, '')
+                const payload = jwt.decode(token, secret)
+                if (Date.now() >  payload.exp) {
+                    return false
+                } else {
+                    return payload
+                }
+            } catch (e) {
+                return false
+            }
+        }
+
+        return false
     }
 }

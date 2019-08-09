@@ -16,6 +16,8 @@ const {database} = require(resolve('crab.config.js'))
 const _TASKS_TABLE = 'c_tasks'
 // 类型列表
 const _TYPES_TABLE = 'c_types'
+// 用户表
+const _USERS_TABLE = 'c_users'
 
 
 let db: knex | undefined = undefined
@@ -28,6 +30,20 @@ if (!db) {
         useNullAsDefault: true,
         connection: {
             filename: dbFile
+        }
+    })
+
+    // 创建用户表
+    db.schema.hasTable(_USERS_TABLE).then(function (exists) {
+        if (!exists) {
+            return db.schema.createTable(_USERS_TABLE, function (t: TableBuilder) {
+                t.increments('uid').primary()
+                t.string('name', 16).notNullable().index('name')
+                t.string('hash', 130).notNullable()
+                t.string('nickname', 16)
+                t.boolean('admin').defaultTo(0)
+                t.boolean('execute').defaultTo(1)
+            })
         }
     })
 
@@ -63,5 +79,6 @@ if (!db) {
 export {
     db,
     _TASKS_TABLE,
-    _TYPES_TABLE
+    _TYPES_TABLE,
+    _USERS_TABLE
 }
