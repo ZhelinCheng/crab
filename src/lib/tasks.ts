@@ -33,14 +33,9 @@ function resolve(p: string): string {
 // 获取数据库配置
 const {database} = require(resolve('crab.config.js'))
 
-const test = `{
-    async request () {
-        return []
-    },
-
-    test () {
-        this.save(1111)
-        console.log(this)
+const test = `const task = {
+    save () {
+        console.log(111)
     }
 }`
 
@@ -120,7 +115,7 @@ export class Tasks {
      */
     generateTimer(task: TaskArrayItem) {
         const tid = task.tid
-        let def = new Function(`return ${task.code}`)() || {}
+        let def = new Function(`${test}; return task`)() || {}
         def = Object.assign(Object.create(database || {}), def, task, {
             stop: this.timerHandle.bind(this, tid, false),
             start: this.timerHandle.bind(this, tid, true),

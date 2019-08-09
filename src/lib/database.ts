@@ -57,7 +57,7 @@ if (!db) {
                 t.string('table', 30)
                 t.string('cron', 30)
                 t.integer('type', 3).defaultTo(1)
-                t.integer('error_time', 4)
+                t.integer('error_time', 4).defaultTo(0)
                 t.text('code')
                 t.boolean('open').defaultTo(0)
             })
