@@ -23,6 +23,7 @@ import _ from 'lodash'
 import cheerio from 'cheerio'
 import { CronJob } from 'cron'
 import path from 'path'
+import { createTasksTable } from './database'
 import rq from './request'
 // import { VM } from 'vm2'
 import TasksModel from '../models/Tasks'
@@ -45,14 +46,10 @@ export class Tasks {
         [key: string]: any
     } = {}
 
-    constructor() {
-        TasksModel.selectTasks()
-            .then(tasks => {
-                this.tasksLoad(tasks)
-            })
-            .catch((e: Error) => {
-                console.error(e)
-            })
+    constructor () {
+        createTasksTable().then((exists) => {
+            exists && this.tasksLoad()
+        })
     }
 
     /**
@@ -151,7 +148,8 @@ export class Tasks {
     /**
      * 任务加载
      */
-    tasksLoad(tasks: TaskArrayItem[]) {
+    async tasksLoad() {
+        const tasks: TaskArrayItem[] = await TasksModel.selectTasks()
         tasks.forEach(task => {
             let _timer = this.generateTimer(task)
             this.tasks[task.tid] = {

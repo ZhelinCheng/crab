@@ -22,6 +22,36 @@ const _USERS_TABLE = 'c_users'
 
 let db: knex | undefined = undefined
 
+/**
+ * 创建任务列表
+ */
+async function createTasksTable() {
+    return new Promise(async (resolve1, reject) => {
+        try {
+            await db.schema.hasTable(_TASKS_TABLE).then(async (exists) => {
+                if (!exists) {
+                    return db.schema.createTable(_TASKS_TABLE, function (t: TableBuilder) {
+                        t.increments('tid').primary()
+                        t.integer('created_at').notNullable().index('created_at')
+                        t.string('title', 30).defaultTo('新建任务')
+                        t.string('table', 30)
+                        t.string('cron', 30)
+                        t.integer('type', 3).defaultTo(1)
+                        t.integer('error_time', 4).defaultTo(0)
+                        t.integer('expire_date').defaultTo(1861891200)
+                        t.text('code')
+                        t.boolean('open').defaultTo(0)
+                    })
+                }
+            })
+            resolve1(true)
+        } catch (e) {
+            console.error(e)
+            reject(false)
+        }
+    })
+}
+
 if (!db) {
     const dbFile = resolve(database.filename || 'crab.db')
     fsext.ensureFileSync(dbFile)
@@ -47,23 +77,6 @@ if (!db) {
         }
     })
 
-    // 创建任务表
-    db.schema.hasTable(_TASKS_TABLE).then(function (exists) {
-        if (!exists) {
-            return db.schema.createTable(_TASKS_TABLE, function (t: TableBuilder) {
-                t.increments('tid').primary()
-                t.integer('created_at').notNullable().index('created_at')
-                t.string('title', 30).defaultTo('新建任务')
-                t.string('table', 30)
-                t.string('cron', 30)
-                t.integer('type', 3).defaultTo(1)
-                t.integer('error_time', 4).defaultTo(0)
-                t.text('code')
-                t.boolean('open').defaultTo(0)
-            })
-        }
-    })
-
     // 创建类型列表
     db.schema.hasTable(_TYPES_TABLE).then(function (exists) {
         if (!exists) {
@@ -71,7 +84,7 @@ if (!db) {
                 t.integer('type', 3).notNullable().primary()
                 t.string('label', 10).notNullable()
             }).then(async () => {
-                await db(_TYPES_TABLE).insert([{type: 1, label: '所有'}])
+                await db(_TYPES_TABLE).insert([{type: 1, label: '未分类'}])
             })
         }
     })
@@ -79,6 +92,7 @@ if (!db) {
 
 export {
     db,
+    createTasksTable,
     _TASKS_TABLE,
     _TYPES_TABLE,
     _USERS_TABLE
