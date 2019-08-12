@@ -7,22 +7,29 @@ import { Tasks } from './lib/tasks'
 import router from './routes'
 import render from './middleware/render'
 import { db } from './lib/database'
+import WebSocket from 'ws'
+
 const onerror = require('koa-onerror')
 
-// const index = require('./routes/index')
-// const users = require('./routes/users')
-
-const tasks = new Tasks()
 const app = new Koa()
+const wss = new WebSocket.Server({noServer: true})
+const tasks = new Tasks()
 app.context.db = db
 app.context.tasks = tasks
+
+wss.on('connection', function connection(ws, request) {
+    ws.on('message', function message(msg) {
+        console.log(`Received message ${msg}`)
+    })
+});
+
 
 // error handler
 onerror(app)
 
 // middlewares
 app.use(bodyparser({
-  enableTypes: ['json', 'form', 'text']
+    enableTypes: ['json', 'form', 'text']
 }))
 app.use(json())
 app.use(logger())
@@ -35,10 +42,10 @@ app.use(render())
 
 // logger
 app.use(async (ctx, next) => {
-  const start: number = new Date().getTime()
-  await next()
-  const ms: number = new Date().getTime() - start
-  console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
+    const start: number = new Date().getTime()
+    await next()
+    const ms: number = new Date().getTime() - start
+    console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
 // routes
@@ -47,9 +54,10 @@ app.use(router.routes())
 
 // error-handling
 app.on('error', (err: Error, ctx: Context) => {
-  console.error('server error', err, ctx)
-});
+    console.error('server error', err, ctx)
+})
 
 export {
-  app
+    app,
+    wss
 }

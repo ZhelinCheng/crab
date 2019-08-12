@@ -63,7 +63,7 @@ export class Tasks {
             $: cheerio
         }
 
-        let data = def.request && await def.request(ctx)
+        let data = def.onRequest && await def.onRequest(ctx)
         const isUpdate = def.hasOwnProperty('update')
         const isSave = def.hasOwnProperty('save')
         const inSave = 'save' in def
@@ -75,15 +75,14 @@ export class Tasks {
         }
 
         ctx.data = data
-
         if (isSave) {
-            def.save(ctx)
+            def.onSave(ctx)
         } else if (isUpdate) {
-            def.update(ctx)
+            def.onUpdate(ctx)
         } else if (inSave) {
-            def.save(ctx)
+            def.onSave(ctx)
         } else if (inUpdate) {
-            def.update(ctx)
+            def.onUpdate(ctx)
         } else {
             console.info('你未定义任何方法')
         }

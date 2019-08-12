@@ -4,13 +4,14 @@
  */
 
 import jwt from 'jwt-simple'
-import { Context } from 'koa'
+import {Context} from 'koa'
 import bcrypt from 'bcryptjs'
-import Users, { UserItem } from '../models/Users'
-const { secret } = require('../../crab.config')
+import Users, {UserItem} from '../models/Users'
+
+const {secret} = require('../../crab.config')
 
 export default class AllowedMethods {
-    static async login (ctx: Context) {
+    static async login(ctx: Context) {
         const body = ctx.request.body
         const name = body.name
         const password = body.password
@@ -30,8 +31,8 @@ export default class AllowedMethods {
                     execute: user.execute,
                     uid: user.uid,
                     name
-                };
-                const Token = jwt.encode(payload, secret);
+                }
+                const Token = jwt.encode(payload, secret)
                 ctx.render(200, Token)
             } else {
                 ctx.render(403004)
@@ -43,13 +44,13 @@ export default class AllowedMethods {
     }
 
 
-    static async allowed (ctx: Context, next: Function) {
+    static async allowed(ctx: Context, next: Function) {
         let token: string = ctx.get('authorization')
         if (/^bearer/i.test(token)) {
             try {
                 token = token.replace(/^bearer\s+/i, '')
                 const payload = jwt.decode(token, secret)
-                if (Date.now() >  payload.exp) {
+                if (Date.now() > payload.exp) {
                     ctx.render(401, null, 'Token已过期')
                 } else {
                     ctx.state.user = payload
@@ -61,13 +62,28 @@ export default class AllowedMethods {
         }
     }
 
-    static payload (ctx: Context): any {
+    static wsAllowed(token: string = '') {
+        if (token) {
+            try {
+                token = token.replace(/^bearer\s+/i, '')
+                const payload = jwt.decode(token, secret)
+                if (Date.now() <= payload.exp) {
+                    return payload
+                }
+            } catch (e) {
+                return false
+            }
+        }
+        return false
+    }
+
+    static payload(ctx: Context): any {
         let token: string = ctx.get('authorization')
         if (/^bearer/i.test(token)) {
             try {
                 token = token.replace(/^bearer\s+/i, '')
                 const payload = jwt.decode(token, secret)
-                if (Date.now() >  payload.exp) {
+                if (Date.now() > payload.exp) {
                     return false
                 } else {
                     return payload

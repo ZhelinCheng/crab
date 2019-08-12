@@ -4,10 +4,10 @@
  * Module dependencies.
  */
 
-import { app } from '../app'
+import AllowedMethods from '../middleware/allowedMethods'
+import { app, wss } from '../app'
 import Debug from 'debug'
 import http from 'http'
-import WebSocket from 'ws'
 
 const debug = Debug('server')
 /**
@@ -19,29 +19,32 @@ const port: number = normalizePort(process.env.PORT || '4010')
 /**
  * Create HTTP server.
  */
-
-const wss = new WebSocket.Server({port: port + 1})
-
-wss.on('connection', function connection(ws) {
-    console.log(1111)
-
-    ws.on('message', function incoming(message) {
-        console.log('received: %s', message)
-    })
-
-    ws.send('something')
-})
-
-app.context.wss = wss
 const server = http.createServer(app.callback())
+const wsServer = http.createServer()
+
 
 /**
  * Listen on provided port, on all network interfaces.
  */
-
 server.on('error', onError)
 server.on('listening', onListening)
 server.listen(port)
+
+/**
+ * ws链接及权限校验
+ */
+wsServer.on('upgrade', function upgrade(request, socket, head) {
+    const isAllowed = AllowedMethods.wsAllowed()
+    if (!isAllowed) {
+        wss.handleUpgrade(request, socket, head, function done(ws) {
+            wss.emit('connection', ws, request);
+        });
+    } else {
+        console.log(111)
+        socket.destroy()
+    }
+});
+wsServer.listen(port + 1)
 
 /**
  * Normalize a port into a number, string, or false.
