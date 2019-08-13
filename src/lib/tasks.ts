@@ -2,12 +2,6 @@
  * Created by ChengZheLin on 2019/8/7.
  * Features: 生命周期
  */
-
-
-export interface TaskItem {
-    task: (ctx: any) => void
-}
-
 export interface TaskArrayItem {
     tid: number,
     title: string,
@@ -31,14 +25,14 @@ import TasksModel from '../models/Tasks'
 function resolve(p: string): string {
     return path.resolve(__dirname, '../../' + p)
 }
+
+function logs(msg: any): void {
+    if (this && this.test) this.ws.send(msg)
+    else console.log(msg)
+}
+
 // 获取数据库配置
 const {database} = require(resolve('crab.config.js'))
-
-const test = `const task = {
-    save () {
-        console.log(111)
-    }
-}`
 
 export class Tasks {
     rq = rq
@@ -46,7 +40,7 @@ export class Tasks {
         [key: string]: any
     } = {}
 
-    constructor () {
+    constructor() {
         createTasksTable().then((exists) => {
             exists && this.tasksLoad()
         })
@@ -57,6 +51,8 @@ export class Tasks {
      * @param def
      */
     async carried(def: any): Promise<void> {
+        const test = def.test
+        console.log(111, test)
         let ctx: any = {
             rq,
             _,
@@ -68,7 +64,6 @@ export class Tasks {
         const isSave = def.hasOwnProperty('save')
         const inSave = 'save' in def
         const inUpdate = 'update' in def
-
         if (!data) {
             console.info('request方法未return数据')
             return
@@ -79,12 +74,12 @@ export class Tasks {
             def.onSave(ctx)
         } else if (isUpdate) {
             def.onUpdate(ctx)
-        } else if (inSave) {
+        } else if (inSave && !test) {
             def.onSave(ctx)
-        } else if (inUpdate) {
+        } else if (inUpdate && !test) {
             def.onUpdate(ctx)
         } else {
-            console.info('你未定义任何方法')
+            logs('你未定义任何保存或更新方法')
         }
     }
 
@@ -105,13 +100,14 @@ export class Tasks {
             console.error(e)
         }
     }
+
     /**
      * 生成定时器
      * @param task
      */
     generateTimer(task: TaskArrayItem) {
         const tid = task.tid
-        let def = new Function(`${test}; return task`)() || {}
+        let def = new Function('logs', `${task.code}; return task`)(logs) || {}
         def = Object.assign(Object.create(database || {}), def, task, {
             stop: this.timerHandle.bind(this, tid, false),
             start: this.timerHandle.bind(this, tid, true),
@@ -156,5 +152,27 @@ export class Tasks {
                 _timer
             }
         })
+    }
+
+    /**
+     * 测试代码
+     * @param code
+     * @param ws
+     */
+    async testCode(code: string, ws: any) {
+        let def = new Function('logs', `${code}; return task`)(logs.bind({
+            test: true,
+            ws: ws
+        })) || {}
+        def = Object.assign(def, {
+            test: true,
+            stop: function () {
+                console.log('调用停止方法')
+            },
+            start: function () {
+                console.log('调用启动方法')
+            }
+        })
+        await this.carried(def)
     }
 }

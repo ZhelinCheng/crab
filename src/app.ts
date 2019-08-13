@@ -17,12 +17,27 @@ const tasks = new Tasks()
 app.context.db = db
 app.context.tasks = tasks
 
-wss.on('connection', function connection(ws, request) {
-    ws.on('message', function message(msg) {
-        console.log(`Received message ${msg}`)
+function noop() {}
+
+function heartbeat() {
+    this.isAlive = true;
+}
+
+wss.on('connection', function connection(ws: any) {
+    ws.isAlive = true;
+    ws.on('pong', heartbeat);
+    ws.on('message', async function message(code: string) {
+        await tasks.testCode(code, ws)
     })
 });
 
+setInterval(function ping() {
+    wss.clients.forEach(function each(ws: any) {
+        if (ws.isAlive === false) return ws.terminate();
+        ws.isAlive = false
+        ws.ping(noop)
+    });
+}, 30000);
 
 // error handler
 onerror(app)

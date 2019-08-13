@@ -40,7 +40,6 @@ wsServer.on('upgrade', function upgrade(request, socket, head) {
             wss.emit('connection', ws, request);
         });
     } else {
-        console.log(111)
         socket.destroy()
     }
 });
