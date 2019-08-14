@@ -8,12 +8,11 @@
 module.exports = {
   secret: 'fGK7cbcmRyutieTSMUje0wqwYE4sF3dL',
   database: {
-    filename: 'crab.db',
-    save: function () {
+    onSave: function () {
       console.log('全局保存数据方法')
       this.stop()
     },
-    update: function () {
+    onUpdate: function () {
       console.log('全局更新数据方法')
       this.stop()
     }

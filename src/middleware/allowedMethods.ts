@@ -4,14 +4,14 @@
  */
 
 import jwt from 'jwt-simple'
-import {Context} from 'koa'
+import { Context } from 'koa'
 import bcrypt from 'bcryptjs'
-import Users, {UserItem} from '../models/Users'
+import Users, { UserItem } from '../models/Users'
 
 const {secret} = require('../../crab.config')
 
 export default class AllowedMethods {
-    static async login(ctx: Context) {
+    static async login(ctx: Context, next: Function) {
         const body = ctx.request.body
         const name = body.name
         const password = body.password
@@ -41,6 +41,7 @@ export default class AllowedMethods {
         }
 
         ctx.render(403002)
+        await next()
     }
 
 
@@ -54,12 +55,15 @@ export default class AllowedMethods {
                     ctx.render(401, null, 'Token已过期')
                 } else {
                     ctx.state.user = payload
-                    next()
                 }
             } catch (e) {
                 ctx.render(401, null, '无效Token')
             }
+        } else {
+            ctx.render(401, null, '请登录')
         }
+
+        await next()
     }
 
     static wsAllowed(token: string = '') {

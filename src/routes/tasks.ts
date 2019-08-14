@@ -6,6 +6,9 @@ import Router from 'koa-router'
 import * as tasks from '../controllers/tasks'
 const router: Router = new Router()
 
-router.get('/list', tasks.getTasksList)
+router.get('/', tasks.getTasksList)
+
+// 添加任务
+router.post('/item-add', tasks.addTasksItem)
 
 export default router

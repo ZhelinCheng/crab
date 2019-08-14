@@ -2,6 +2,16 @@
  * Created by ChengZheLin on 2019/8/7.
  * Features: 生命周期
  */
+import _ from 'lodash'
+import moment from 'moment'
+import cheerio from 'cheerio'
+import { CronJob } from 'cron'
+import path from 'path'
+import { createTasksTable } from './database'
+import rq from './request'
+import { NodeVM, VMScript } from 'vm2'
+import TasksModel from '../models/Tasks'
+
 export interface TaskArrayItem {
     tid: number,
     title: string,
@@ -9,27 +19,36 @@ export interface TaskArrayItem {
     cron: string,
     type: number,
     error_time?: number,
-    code?: string,
+    code?: VMScript,
     open: 0 | 1
 }
 
-import _ from 'lodash'
-import cheerio from 'cheerio'
-import { CronJob } from 'cron'
-import path from 'path'
-import { createTasksTable } from './database'
-import rq from './request'
-// import { VM } from 'vm2'
-import TasksModel from '../models/Tasks'
 
 function resolve(p: string): string {
     return path.resolve(__dirname, '../../' + p)
 }
 
-function logs(msg: any): void {
-    if (this && this.test) this.ws.send(msg)
-    else console.log(msg)
+function logs(msg: string): void {
+    let date = moment().format()
+    if (this && this.ws) this.ws.send(JSON.stringify({
+        type: 'default',
+        date,
+        msg
+    }))
+    else console.log(`[${date}] ${JSON.stringify(msg)}`)
 }
+
+const vm = new NodeVM({
+    console: 'inherit',
+    timeout: 5000,
+    sandbox: {
+        rq,
+        moment,
+        $: cheerio,
+        _,
+        logs
+    }
+})
 
 // 获取数据库配置
 const {database} = require(resolve('crab.config.js'))
@@ -49,37 +68,31 @@ export class Tasks {
     /**
      * 执行回调方法
      * @param def
+     * @param ws
      */
-    async carried(def: any): Promise<void> {
-        const test = def.test
-        console.log(111, test)
-        let ctx: any = {
-            rq,
-            _,
-            $: cheerio
-        }
+    async carried(def: any, ws?: any): Promise<void> {
+        let data = def.onRequest && await def.onRequest()
+        const isTest = def.test
+        const isUpdate = def.hasOwnProperty('onUpdate')
+        const isSave = def.hasOwnProperty('onSave')
+        const inSave = 'onSave' in def
+        const inUpdate = 'onUpdate' in def
 
-        let data = def.onRequest && await def.onRequest(ctx)
-        const isUpdate = def.hasOwnProperty('update')
-        const isSave = def.hasOwnProperty('save')
-        const inSave = 'save' in def
-        const inUpdate = 'update' in def
         if (!data) {
-            console.info('request方法未return数据')
+            logs.call({ ws }, 'onRequest方法未return数据')
             return
         }
 
-        ctx.data = data
         if (isSave) {
-            def.onSave(ctx)
+            def.onSave(data)
         } else if (isUpdate) {
-            def.onUpdate(ctx)
-        } else if (inSave && !test) {
-            def.onSave(ctx)
-        } else if (inUpdate && !test) {
-            def.onUpdate(ctx)
+            def.onUpdate(data)
+        } else if (def.update && inUpdate) {
+            def.onUpdate(data)
+        } else if (inSave) {
+            def.onSave(data)
         } else {
-            logs('你未定义任何保存或更新方法')
+            logs.call({ ws }, isTest ? '测试代码将不执行全局保存或更新方法' : '未定义保存或更新方法')
         }
     }
 
@@ -107,11 +120,12 @@ export class Tasks {
      */
     generateTimer(task: TaskArrayItem) {
         const tid = task.tid
-        let def = new Function('logs', `${task.code}; return task`)(logs) || {}
+        let def = vm.run(task.code)
         def = Object.assign(Object.create(database || {}), def, task, {
             stop: this.timerHandle.bind(this, tid, false),
             start: this.timerHandle.bind(this, tid, true),
         })
+
         return new CronJob(task.cron, async () => {
             try {
                 await this.carried(def)
@@ -141,16 +155,43 @@ export class Tasks {
     }
 
     /**
-     * 任务加载
+     * 添加任务
+     * @param task
      */
-    async tasksLoad() {
-        const tasks: TaskArrayItem[] = await TasksModel.selectTasks()
-        tasks.forEach(task => {
+    pushTask (task: any): TaskArrayItem | boolean {
+        try {
             let _timer = this.generateTimer(task)
             this.tasks[task.tid] = {
                 ...task,
                 _timer
             }
+            return task
+        } catch (e) {
+            console.error(e)
+            return false
+        }
+    }
+
+    /**
+     * 删除任务
+     */
+    deleteTask (tid: number): boolean {
+        try {
+            this.timerHandle(tid, false)
+            delete this.tasks[tid]
+            return true
+        } catch (e) {
+            return false
+        }
+    }
+
+    /**
+     * 任务加载
+     */
+    async tasksLoad() {
+        const tasks: TaskArrayItem[] = await TasksModel.selectTasks()
+        tasks.forEach(task => {
+            this.pushTask(task)
         })
     }
 
@@ -159,20 +200,33 @@ export class Tasks {
      * @param code
      * @param ws
      */
-    async testCode(code: string, ws: any) {
-        let def = new Function('logs', `${code}; return task`)(logs.bind({
-            test: true,
-            ws: ws
-        })) || {}
-        def = Object.assign(def, {
-            test: true,
-            stop: function () {
-                console.log('调用停止方法')
-            },
-            start: function () {
-                console.log('调用启动方法')
-            }
-        })
-        await this.carried(def)
+    async testCode(code: VMScript, ws: any) {
+        try {
+            const testVm = new NodeVM({
+                console: 'inherit',
+                timeout: 5000,
+                sandbox: {
+                    rq,
+                    moment,
+                    $: cheerio,
+                    _,
+                    logs: logs.bind({
+                        test: true,
+                        ws
+                    })
+                }
+            })
+            let def = testVm.run(code)
+            def = Object.assign(def, {
+                test: true
+            })
+            await this.carried(def, ws)
+        } catch (e) {
+            ws.send(JSON.stringify({
+                date: moment().format(),
+                type: 'error',
+                msg: e.name + ' ' + e.message
+            }))
+        }
     }
 }

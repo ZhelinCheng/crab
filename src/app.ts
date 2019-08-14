@@ -8,6 +8,7 @@ import router from './routes'
 import render from './middleware/render'
 import { db } from './lib/database'
 import WebSocket from 'ws'
+import { VMScript } from 'vm2'
 
 const onerror = require('koa-onerror')
 
@@ -26,7 +27,7 @@ function heartbeat() {
 wss.on('connection', function connection(ws: any) {
     ws.isAlive = true;
     ws.on('pong', heartbeat);
-    ws.on('message', async function message(code: string) {
+    ws.on('message', async function message(code: VMScript) {
         await tasks.testCode(code, ws)
     })
 });

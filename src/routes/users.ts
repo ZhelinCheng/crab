@@ -17,6 +17,6 @@ router.post('/login', AllowedMethods.login)
 router.post('/reset', users.reset)
 
 // 注册
-router.post('/sign', users.registered)
+router.post('/registered', users.registered)
 
 export default router
