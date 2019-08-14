@@ -10,7 +10,7 @@ module.exports = {
   database: {
     onSave: function () {
       console.log('全局保存数据方法')
-      this.stop()
+      // this.stop()
     },
     onUpdate: function () {
       console.log('全局更新数据方法')

@@ -41,7 +41,13 @@ export default class Tasks {
             .from(_TASKS_TABLE)
     }
 
-    static async addTaskItem (body: object): Promise<TaskArrayItem[]> {
+    static async addTaskItem (body: object): Promise<number[]> {
         return await db(_TASKS_TABLE).insert(body)
+    }
+
+    static async updateTask (up: any): Promise<number> {
+        return await db(_TASKS_TABLE)
+            .where(up.where)
+            .update(up.update)
     }
 }

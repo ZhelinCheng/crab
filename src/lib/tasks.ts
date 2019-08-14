@@ -13,6 +13,7 @@ import { NodeVM, VMScript } from 'vm2'
 import TasksModel from '../models/Tasks'
 
 export interface TaskArrayItem {
+    created_at: number | string,
     tid: number,
     title: string,
     table: string,
@@ -101,7 +102,7 @@ export class Tasks {
      * @param tid
      * @param start
      */
-    timerHandle(tid: number, start: boolean) {
+    timerHandle(tid: number | string, start: boolean) {
         try {
             let _timer = this.tasks[tid]._timer
             if (start) {
@@ -130,10 +131,11 @@ export class Tasks {
             try {
                 await this.carried(def)
             } catch (e) {
+                console.error(e)
                 def.error && def.error(e)
                 this.errorHandle(
                     def,
-                    10
+                    def.error_time
                 )
             }
         }, null, task.open > 0, 'Asia/Shanghai')
@@ -159,6 +161,8 @@ export class Tasks {
      * @param task
      */
     pushTask (task: any): TaskArrayItem | boolean {
+        if (!task) return
+
         try {
             let _timer = this.generateTimer(task)
             this.tasks[task.tid] = {
