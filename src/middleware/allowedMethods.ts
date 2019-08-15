@@ -55,6 +55,7 @@ export default class AllowedMethods {
                     ctx.render(401, null, 'Token已过期')
                 } else {
                     ctx.state.user = payload
+                    await next()
                 }
             } catch (e) {
                 ctx.render(401, null, '无效Token')
@@ -62,8 +63,6 @@ export default class AllowedMethods {
         } else {
             ctx.render(401, null, '请登录')
         }
-
-        await next()
     }
 
     static wsAllowed(token: string = '') {

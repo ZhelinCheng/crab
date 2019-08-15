@@ -30,6 +30,10 @@ wss.on('connection', function connection(ws: any) {
     ws.on('message', async function message(code: VMScript) {
         await tasks.testCode(code, ws)
     })
+    ws.send(JSON.stringify({
+        date: 'WebSocket',
+        msg: '准备就绪'
+    }))
 });
 
 setInterval(function ping() {

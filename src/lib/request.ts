@@ -9,10 +9,11 @@ import _ from 'lodash'
 interface Params {
     uri: string
     method: string
+    headers?: object
     form?: object
-    formData?: object,
-    body?: string,
-    opsJson?: boolean | undefined,
+    formData?: object
+    body?: string
+    opsJson?: boolean | undefined
     opsMobile?: boolean | undefined
 }
 
@@ -33,7 +34,7 @@ function userAgentGenerate (mobile?: boolean | undefined) {
     return ua[mobile ? 'm' : 'p'][_.random(0, 2)]
 }
 
-export default async function (params: Params, headers: any = {}): Promise<void | string | object> {
+export default async function (params: Params): Promise<void | string | object> {
     try {
         return await request({
             ...params,
@@ -41,7 +42,7 @@ export default async function (params: Params, headers: any = {}): Promise<void 
             resolveWithFullResponse: true,
             json: params.opsJson,
             headers: {
-                ...headers,
+                ...params.headers,
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
                 'Accept-Language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,ko;q=0.7',
                 'Connection': 'keep-alive',

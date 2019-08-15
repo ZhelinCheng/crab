@@ -3,18 +3,26 @@
  * Features:
  */
 
-import { db, _TASKS_TABLE } from '../lib/database'
+import { db, _TASKS_TABLE, _TYPES_TABLE } from '../lib/database'
 import { TaskArrayItem } from '../lib/tasks'
 
 export default class Tasks {
     constructor () {}
 
-    static async select (ops?: object, ): Promise<TaskArrayItem[]> {
+    static async select (ops?: object ): Promise<TaskArrayItem[]> {
         return await db.select()
             .where(function () {
                 ops && this.where(ops)
             })
             .from(_TASKS_TABLE)
+    }
+
+    static async delete (ops?: object) {
+        return await db(_TASKS_TABLE)
+            .where(function () {
+                ops && this.where(ops)
+            })
+            .del()
     }
 
     static async selectTasks (): Promise<TaskArrayItem[]> {
@@ -36,9 +44,11 @@ export default class Tasks {
             'type',
             'error_time',
             'expire_date',
-            'open'
+            'open',
+            'label'
         ])
             .from(_TASKS_TABLE)
+            .leftOuterJoin(_TYPES_TABLE, `${_TASKS_TABLE}.type`, `${_TYPES_TABLE}.task_type`)
     }
 
     static async addTaskItem (body: object): Promise<number[]> {

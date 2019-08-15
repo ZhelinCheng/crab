@@ -81,10 +81,10 @@ if (!db) {
     db.schema.hasTable(_TYPES_TABLE).then(function (exists) {
         if (!exists) {
             return db.schema.createTable(_TYPES_TABLE, function (t: TableBuilder) {
-                t.integer('type', 3).notNullable().primary()
+                t.integer('task_type', 3).notNullable().primary()
                 t.string('label', 10).notNullable()
             }).then(async () => {
-                await db(_TYPES_TABLE).insert([{type: 1, label: '未分类'}])
+                await db(_TYPES_TABLE).insert([{task_type: 1, label: '未分类'}])
             })
         }
     })

@@ -51,3 +51,17 @@ export async function putTaskItem(ctx: Context, next: Function): Promise<void> {
         ctx.render(200, false)
     }
 }
+
+export async function getTasksInfo(ctx: Context, next: Function): Promise<void> {
+    const tid = ctx.request.query
+    const task = await Tasks.select(tid)
+    await next()
+    ctx.render(200, task[0] || {})
+}
+
+export async function delTaskItem(ctx: Context, next: Function): Promise<void> {
+    const tid = ctx.request.query
+    const res = await Tasks.delete(tid)
+    await next()
+    ctx.render(200, res > 0)
+}
