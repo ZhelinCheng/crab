@@ -9,6 +9,8 @@ import render from './middleware/render'
 import { db } from './lib/database'
 import WebSocket from 'ws'
 import { VMScript } from 'vm2'
+import koaStatic from 'koa-static'
+import path from 'path'
 
 const onerror = require('koa-onerror')
 
@@ -54,7 +56,7 @@ app.use(bodyparser({
 app.use(json())
 app.use(logger())
 app.use(render())
-// app.use(require('koa-static')(__dirname + '/public'))
+app.use(koaStatic(path.resolve(__dirname, '../public')))
 
 /* app.use(views(__dirname + '/views', {
   extension: 'pug'

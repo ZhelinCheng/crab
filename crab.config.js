@@ -9,7 +9,7 @@ module.exports = {
   secret: 'fGK7cbcmRyutieTSMUje0wqwYE4sF3dL',
   dataHandle: {
     save: function (data) {
-      // console.log('公共保存', data)
+      console.log('公共保存', data)
     }
   }
 }

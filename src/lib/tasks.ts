@@ -79,8 +79,6 @@ export class Tasks {
             return
         }
 
-        console.log('save' in def)
-
         // 处理数据
         if (def.onHandle) {
             def.onHandle(data)
@@ -213,7 +211,7 @@ export class Tasks {
                 }
             })
             let def = testVm.run(code)
-            def = Object.assign(def, {
+            def = Object.assign(Object.create(dataHandle || null), def, {
                 test: true
             })
             await this.carried(def, ws)
