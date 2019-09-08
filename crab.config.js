@@ -7,14 +7,9 @@
 
 module.exports = {
   secret: 'fGK7cbcmRyutieTSMUje0wqwYE4sF3dL',
-  database: {
-    onSave: function () {
-      console.log('全局保存数据方法')
-      // this.stop()
-    },
-    onUpdate: function () {
-      console.log('全局更新数据方法')
-      this.stop()
+  dataHandle: {
+    save: function (data) {
+      // console.log('公共保存', data)
     }
   }
 }

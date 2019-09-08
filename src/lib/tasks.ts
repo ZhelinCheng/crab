@@ -51,8 +51,8 @@ const vm = new NodeVM({
     }
 })
 
-// 获取数据库配置
-const {database} = require(resolve('crab.config.js'))
+// 获取数据处理方法
+const {dataHandle} = require(resolve('crab.config.js'))
 
 export class Tasks {
     rq = rq
@@ -73,27 +73,19 @@ export class Tasks {
      */
     async carried(def: any, ws?: any): Promise<void> {
         let data = def.onRequest && await def.onRequest()
-        const isTest = def.test
-        const isUpdate = def.hasOwnProperty('onUpdate')
-        const isSave = def.hasOwnProperty('onSave')
-        const inSave = 'onSave' in def
-        const inUpdate = 'onUpdate' in def
 
         if (!data) {
             logs.call({ ws }, 'onRequest方法未return数据')
             return
         }
 
-        if (isSave) {
-            def.onSave(data)
-        } else if (isUpdate) {
-            def.onUpdate(data)
-        } else if (def.update && inUpdate) {
-            def.onUpdate(data)
-        } else if (inSave) {
-            def.onSave(data)
+        console.log('save' in def)
+
+        // 处理数据
+        if (def.onHandle) {
+            def.onHandle(data)
         } else {
-            logs.call({ ws }, isTest ? '测试代码将不执行全局保存或更新方法' : '未定义保存或更新方法')
+            logs.call({ ws }, '未定义onHandle方法')
         }
     }
 
@@ -122,7 +114,7 @@ export class Tasks {
     generateTimer(task: TaskArrayItem) {
         const tid = task.tid
         let def = vm.run(task.code)
-        def = Object.assign(Object.create(database || {}), def, task, {
+        def = Object.assign(Object.create(dataHandle || null), def, task, {
             stop: this.timerHandle.bind(this, tid, false),
             start: this.timerHandle.bind(this, tid, true),
         })

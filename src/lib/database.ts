@@ -53,7 +53,7 @@ async function createTasksTable() {
 }
 
 if (!db) {
-    const dbFile = resolve(database.filename || 'crab.db')
+    const dbFile = resolve('crab.db')
     fsext.ensureFileSync(dbFile)
     db = knex({
         client: 'sqlite3',
