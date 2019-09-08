@@ -49,6 +49,7 @@ export async function putTaskItem(ctx: Context, next: Function): Promise<void> {
     }
     ctx.render(200, true)
   } catch (e) {
+    console.error(e)
     ctx.render(200, false)
   }
 }
